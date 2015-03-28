@@ -1,20 +1,18 @@
 #Proof Of Concept
 
 import pymysql
-from tkinter import *
-import string
+try:
+    from Tkinter import *
+except importError:
+    from tkinter import *
+
 
 class Lms:
 
-    def __init__(self, demo):
-        self.demo = demo
-        unButton = Button(demo, text= "push me", command = self.BackToRegister)
-        unButton.pack()
+    def __init__(self, win):
 
-        self.win = Toplevel()
+        self.win = win
         self.LoginPage()
-        self.win.withdraw()
-        self.win.protocol("WM_DELETE_WINDOW", self.win.withdraw())
 
         self.top = Toplevel()
         self.top.title("Registration")
@@ -25,15 +23,15 @@ class Lms:
  
 
     def Connect(self):
-        self.db = pymysql.connect(host='academic-mysql.cc.gatech.edu',user='cs4400_Group_41',
-        db='cs4400_Group_41',passwd='YIBz9hoA')
-        cursor = self.db.cursor()
-        sql = 'SELECT Username FROM User'
-        result = cursor.execute(sql)
-        usernames = cursor.fetchall()
-        print(usernames)
+        try:
+            self.db = pymysql.connect(host='academic-mysql.cc.gatech.edu',user='cs4400_Group_41',
+            db='cs4400_Group_41',passwd='YIBz9hoA')
 
-    # result carries the value of the number of tuples that will be affected by the SQL statement
+        except:
+            messagebox.showwarning("Internet Connection Error!", "Please check your internet connection!")
+            return None
+        
+
 
     def LoginPage(self):                                    # Creates Login GUI.
         
@@ -52,7 +50,7 @@ class Lms:
         Label(self.win).grid(row=4, column=0)
 
         Button(self.win, text = "Register", command = self.BackToRegister).grid(row=5,column=1,sticky=E)
-        Button(self.win, text = "Login").grid(row=5,column=2,sticky=EW)
+        Button(self.win, text = "Login", command = self.LoginCheck).grid(row=5,column=2,sticky=EW)
         Button(self.win, text = "Exit", command=self.win.destroy).grid(row=5,column=3,sticky=E)
 
     def BackToRegister(self):                                   # Helper function to hide Login window and pop up the Register window.
@@ -91,9 +89,6 @@ class Lms:
         username = self.e3.get()
         password = self.e4.get()
         password2 = self.e5.get()
-
-        alphabet = string.ascii_uppercase
-        digits = string.digits
 
     
 
@@ -136,12 +131,33 @@ class Lms:
         messagebox.showwarning("Congratulations!", "Successful Registration!")                                      # Successful Registration if you got this far! 
         self.BackToLogin()
 
+    def LoginCheck(self):                                           # Method that checks to see if username/password combination already exists in database. If so, user is successfully "logged in".
+        self.Connect()
+        username = self.e.get()
+        password = self.e1.get()
+        
+        cursor = self.db.cursor()
+        user_sql = "SELECT * FROM ReservationUser WHERE Username=%s AND Password=%s"
+        user_counter = cursor.execute(user_sql, (username,password))
+
+
+        if user_counter == 0:
+            messagebox.showwarning("Username/Password Combination Error!", "Your username/password combination is incorrect!")
+            cursor.close()
+            self.db.close()
+            return
+        
+        messagebox.showwarning("Success!", "Login successful!")
+        self.username = self.e.get()
+        self.Homepage()
+        self.win.withdraw()
 
 
 
-demo = Tk()
-app = Lms(demo)
-demo.mainloop()
+
+win = Tk()
+app = Lms(win)
+win.mainloop()
 
 
 
